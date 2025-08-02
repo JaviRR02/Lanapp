@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from models import User
-from schemas import UserCreate
+from schemas.user import UserCreate
 from fastapi import HTTPException
 
 def create_user(db: Session, user: UserCreate):
