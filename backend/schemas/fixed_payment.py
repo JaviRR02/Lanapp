@@ -10,3 +10,11 @@ class FixedPaymentSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+class FixedPaymentEditSchema(BaseModel):
+    name: Optional[str] = None
+    amount: Optional[float] = None
+    day: Optional[int] = None
+
+    class Config:
+        orm_mode = True

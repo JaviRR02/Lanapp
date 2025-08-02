@@ -18,3 +18,44 @@ def crear_presupuesto(data: BudgetSchema, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(nuevo)
     return nuevo
+
+@router.put("/", response_model=BudgetSchema)
+def editar_presupuesto(data: BudgetSchema, db: Session = Depends(get_db)):
+    presupuesto = db.query(Budget).filter(
+        Budget.email == data.email,
+        Budget.category == data.category
+    ).first()
+
+    if not presupuesto:
+        raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
+
+    presupuesto.limit = data.limit
+    db.commit()
+    db.refresh(presupuesto)
+    return presupuesto
+
+@router.get("/buscar", response_model=BudgetSchema)
+def buscar_presupuesto(email: str, category: str, db: Session = Depends(get_db)):
+    presupuesto = db.query(Budget).filter(
+        Budget.email == email,
+        Budget.category == category
+    ).first()
+
+    if not presupuesto:
+        raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
+
+    return presupuesto
+
+@router.delete("/eliminar")
+def eliminar_presupuesto(email: str, category: str, db: Session = Depends(get_db)):
+    presupuesto = db.query(Budget).filter(
+        Budget.email == email,
+        Budget.category == category
+    ).first()
+
+    if not presupuesto:
+        raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
+
+    db.delete(presupuesto)
+    db.commit()
+    return {"message": "Presupuesto eliminado exitosamente"}
