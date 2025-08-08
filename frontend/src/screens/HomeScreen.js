@@ -6,7 +6,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <>
-      {/* Cambiamos el color de la barra de estado según el modo claro/oscuro */}
+      {/* Barra de estado adaptable */}
       <StatusBar
         barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
@@ -15,7 +15,7 @@ export default function HomeScreen({ navigation }) {
       <SafeAreaView style={[styles.safeArea, colorScheme === 'dark' ? styles.darkBackground : styles.lightBackground]}>
         <ScrollView contentContainerStyle={styles.container}>
           <View style={[styles.card, colorScheme === 'dark' ? styles.cardDark : styles.cardLight]}>
-            {/* Logo cuadrado con bordes redondeados */}
+            {/* Logo */}
             <Image 
               source={require('../../assets/logoLAPP.png')} 
               style={styles.logo} 
@@ -36,7 +36,7 @@ export default function HomeScreen({ navigation }) {
                 style={[styles.button, styles.buttonPrimary]}
                 onPress={() => navigation.navigate('Login')}
               >
-                <Text style={styles.buttonText}>Iniciar Sesión</Text>
+                <Text style={[styles.buttonText, styles.buttonTextLight]}>Iniciar Sesión</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -54,21 +54,17 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  lightBackground: {
-    backgroundColor: '#FFFFFF',
-  },
-  darkBackground: {
-    backgroundColor: '#121212', // fondo oscuro para modo oscuro
-  },
+  safeArea: { flex: 1 },
+  lightBackground: { backgroundColor: '#FFFFFF' },
+  darkBackground: { backgroundColor: '#121212' },
+
   container: {
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
+
   card: {
     width: '100%',
     borderRadius: 20,
@@ -80,42 +76,34 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  cardLight: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  },
-  cardDark: {
-    backgroundColor: 'rgba(30, 30, 30, 0.8)',
-  },
+  cardLight: { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+  cardDark: { backgroundColor: 'rgba(30, 30, 30, 0.8)' },
+
   logo: {
     width: 120,
     height: 120,
-    borderRadius: 20, // bordes redondeados en cuadrado
+    borderRadius: 20,
     marginBottom: 20,
   },
+
   title: {
     fontSize: 26,
     fontWeight: '700',
     marginBottom: 10,
     textAlign: 'center',
   },
-  titleLight: {
-    color: '#222',
-  },
-  titleDark: {
-    color: '#eee',
-  },
+  titleLight: { color: '#222' },
+  titleDark: { color: '#eee' },
+
   subtitle: {
     fontSize: 16,
     marginBottom: 30,
     textAlign: 'center',
     paddingHorizontal: 10,
   },
-  subtitleLight: {
-    color: '#555',
-  },
-  subtitleDark: {
-    color: '#bbb',
-  },
+  subtitleLight: { color: '#555' },
+  subtitleDark: { color: '#bbb' },
+
   buttonsContainer: {
     width: '100%',
     gap: 15,
@@ -135,13 +123,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  buttonTextSecondary: {
-    color: '#4CAF50',
-  },
   buttonTextLight: {
     color: '#FFF',
   },
-  buttonTextDark: {
-    color: '#222',
+  buttonTextSecondary: {
+    color: '#4CAF50',
   },
 });

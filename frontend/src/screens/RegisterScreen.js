@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { 
   SafeAreaView, ScrollView, View, Text, TextInput, 
-  StyleSheet, TouchableOpacity, Image, StatusBar, useColorScheme 
+  StyleSheet, TouchableOpacity, Image, StatusBar, useColorScheme,
+  KeyboardAvoidingView, Platform
 } from 'react-native';
 
 export default function RegisterScreen({ navigation }) {
   const colorScheme = useColorScheme();
 
-  // Estado para cada campo
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
@@ -19,40 +19,47 @@ export default function RegisterScreen({ navigation }) {
       alert('Por favor, completa todos los campos.');
       return;
     }
+
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       alert('Por favor, ingresa un correo válido.');
       return;
     }
 
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      alert(passwordError);
-      return;
-    }
+    if (!validatePassword(password)) return;
 
     alert(`Registrando usuario: ${nombre} ${apellido}`);
   };
   
-  // Función para validar contraseña segura
-  function validatePassword(password) {
-    if (password.length < 8) {
-      return 'La contraseña debe tener al menos 8 caracteres.';
+  const validatePassword = (password) => {
+    const regex = {
+      length: /.{8,}/,
+      uppercase: /[A-Z]/,
+      lowercase: /[a-z]/,
+      number: /[0-9]/,
+      special: /[!@#$%^&*(),.?":{}|<>]/,
+    };
+
+    const isValid = 
+      regex.length.test(password) &&
+      regex.uppercase.test(password) &&
+      regex.lowercase.test(password) &&
+      regex.number.test(password) &&
+      regex.special.test(password);
+
+    if (!isValid) {
+      alert(
+        'La contraseña debe ser segura y cumplir con:\n' +
+        '- Al menos 8 caracteres\n' +
+        '- Al menos una letra mayúscula\n' +
+        '- Al menos una letra minúscula\n' +
+        '- Al menos un número\n' +
+        '- Al menos un carácter especial (!@#$%^&*)'
+      );
+      return false;
     }
-    if (!/[A-Z]/.test(password)) {
-      return 'La contraseña debe contener al menos una letra mayúscula.';
-    }
-    if (!/[a-z]/.test(password)) {
-      return 'La contraseña debe contener al menos una letra minúscula.';
-    }
-    if (!/[0-9]/.test(password)) {
-      return 'La contraseña debe contener al menos un número.';
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return 'La contraseña debe contener al menos un carácter especial.';
-    }
-    return null; // cumple con todas las reglas
-  }
+    return true;
+  };
 
   return (
     <>
@@ -61,77 +68,84 @@ export default function RegisterScreen({ navigation }) {
         backgroundColor="transparent"
         translucent
       />
-      <SafeAreaView style={[styles.safeArea, colorScheme === 'dark' ? styles.darkBackground : styles.lightBackground]}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={[styles.card, colorScheme === 'dark' ? styles.cardDark : styles.cardLight]}>
-            <Image 
-              source={require('../../assets/logoLAPP.png')} 
-              style={styles.logo} 
-              resizeMode="cover" 
-            />
+      
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // para que no quede muy pegado
+      >
+        <SafeAreaView style={[styles.safeArea, colorScheme === 'dark' ? styles.darkBackground : styles.lightBackground]}>
+          <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <View style={[styles.card, colorScheme === 'dark' ? styles.cardDark : styles.cardLight]}>
+              <Image 
+                source={require('../../assets/logoLAPP.png')} 
+                style={styles.logo} 
+                resizeMode="cover" 
+              />
 
-            <Text style={[styles.title, colorScheme === 'dark' ? styles.titleDark : styles.titleLight]}>
-              Crear Cuenta
-            </Text>
-            <Text style={[styles.subtitle, colorScheme === 'dark' ? styles.subtitleDark : styles.subtitleLight]}>
-              Completa tus datos para registrarte
-            </Text>
-
-            <TextInput
-              style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
-              placeholder="Nombre"
-              placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
-              value={nombre}
-              onChangeText={setNombre}
-            />
-            <TextInput
-              style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
-              placeholder="Apellido"
-              placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
-              value={apellido}
-              onChangeText={setApellido}
-            />
-            <TextInput
-              style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
-              placeholder="Correo electrónico"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TextInput
-              style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
-              placeholder="Teléfono"
-              keyboardType="phone-pad"
-              placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
-              value={telefono}
-              onChangeText={setTelefono}
-            />
-            <TextInput
-              style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
-              placeholder="Contraseña"
-              secureTextEntry
-              placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={handleRegister}
-            >
-              <Text style={styles.buttonText}>Registrarse</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={[styles.linkText, colorScheme === 'dark' ? styles.linkDark : styles.linkLight]}>
-                ¿Ya tienes cuenta? Inicia sesión
+              <Text style={[styles.title, colorScheme === 'dark' ? styles.titleDark : styles.titleLight]}>
+                Crear Cuenta
               </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+              <Text style={[styles.subtitle, colorScheme === 'dark' ? styles.subtitleDark : styles.subtitleLight]}>
+                Completa tus datos para registrarte
+              </Text>
+
+              <TextInput
+                style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
+                placeholder="Nombre"
+                placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
+                value={nombre}
+                onChangeText={setNombre}
+              />
+              <TextInput
+                style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
+                placeholder="Apellido"
+                placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
+                value={apellido}
+                onChangeText={setApellido}
+              />
+              <TextInput
+                style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
+                placeholder="Correo electrónico"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
+                value={email}
+                onChangeText={setEmail}
+              />
+              <TextInput
+                style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
+                placeholder="Teléfono"
+                keyboardType="phone-pad"
+                placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
+                value={telefono}
+                onChangeText={setTelefono}
+              />
+              <TextInput
+                style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
+                placeholder="Contraseña"
+                secureTextEntry
+                placeholderTextColor={colorScheme === 'dark' ? '#888' : '#aaa'}
+                value={password}
+                onChangeText={setPassword}
+              />
+
+              <TouchableOpacity
+                style={[styles.button, styles.buttonPrimary]}
+                onPress={handleRegister}
+              >
+                <Text style={styles.buttonText}>Registrarse</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Text style={[styles.linkText, colorScheme === 'dark' ? styles.linkDark : styles.linkLight]}>
+                  ¿Ya tienes cuenta? Inicia sesión
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </>
   );
 }

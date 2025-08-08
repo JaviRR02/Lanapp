@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, View, Text, TextInput, StyleSheet, TouchableOpacity, Image, StatusBar, useColorScheme } from 'react-native';
+import { Alert, SafeAreaView, ScrollView, View, Text, TextInput, StyleSheet, TouchableOpacity, Image, StatusBar, useColorScheme, KeyboardAvoidingView, Platform 
+} from 'react-native';
 
 export default function LoginScreen({ navigation }) {
   const colorScheme = useColorScheme();
@@ -12,7 +13,6 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('Error', 'Por favor ingresa tu correo electrónico');
       return;
     }
-    // Validación simple email
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Ingresa un correo electrónico válido');
@@ -23,8 +23,8 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    // Aquí iría la lógica real de login (API, etc)
-    Alert.alert('¡Éxito!', `Bienvenido ${email}`);
+    // Alert.alert('¡Éxito!', `Bienvenido ${email}`);
+    navigation.replace('MainTabs');
   };
 
   return (
@@ -34,56 +34,85 @@ export default function LoginScreen({ navigation }) {
         backgroundColor="transparent"
         translucent
       />
-      <SafeAreaView style={[styles.safeArea, colorScheme === 'dark' ? styles.darkBackground : styles.lightBackground]}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={[styles.card, colorScheme === 'dark' ? styles.cardDark : styles.cardLight]}>
-            {/* Logo */}
-            <Image
-              source={require('../../assets/logoLAPP.png')}
-              style={styles.logo}
-              resizeMode="cover"
-            />
+      <SafeAreaView 
+        style={[
+          styles.safeArea, 
+          colorScheme === 'dark' ? styles.darkBackground : styles.lightBackground
+        ]}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.container} 
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={[
+              styles.card, 
+              colorScheme === 'dark' ? styles.cardDark : styles.cardLight
+            ]}>
+              {/* Logo */}
+              <Image
+                source={require('../../assets/logoLAPP.png')}
+                style={styles.logo}
+                resizeMode="cover"
+              />
 
-            {/* Título */}
-            <Text style={[styles.title, colorScheme === 'dark' ? styles.titleDark : styles.titleLight]}>
-              Iniciar Sesión
-            </Text>
-
-            {/* Inputs */}
-            <TextInput
-              style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
-              placeholder="Correo electrónico"
-              placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TextInput
-              style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
-              placeholder="Contraseña"
-              placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            {/* Botón Iniciar Sesión */}
-            <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={validateAndLogin}
-            >
-              <Text style={[styles.buttonText, styles.buttonTextLight]}>Entrar</Text>
-            </TouchableOpacity>
-
-            {/* Navegar a Registrar */}
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={[styles.linkText, colorScheme === 'dark' ? styles.titleDark : styles.titleLight]}>
-                ¿No tienes cuenta? Crear una
+              {/* Título */}
+              <Text style={[
+                styles.title, 
+                colorScheme === 'dark' ? styles.titleDark : styles.titleLight
+              ]}>
+                Iniciar Sesión
               </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+
+              {/* Inputs */}
+              <TextInput
+                style={[
+                  styles.input, 
+                  colorScheme === 'dark' ? styles.inputDark : styles.inputLight
+                ]}
+                placeholder="Correo electrónico"
+                placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <TextInput
+                style={[
+                  styles.input, 
+                  colorScheme === 'dark' ? styles.inputDark : styles.inputLight
+                ]}
+                placeholder="Contraseña"
+                placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+
+              {/* Botón Iniciar Sesión */}
+              <TouchableOpacity
+                style={[styles.button, styles.buttonPrimary]}
+                onPress={validateAndLogin}
+              >
+                <Text style={[styles.buttonText, styles.buttonTextLight]}>Entrar</Text>
+              </TouchableOpacity>
+
+              {/* Navegar a Registrar */}
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={[
+                  styles.linkText, 
+                  colorScheme === 'dark' ? styles.titleDark : styles.titleLight
+                ]}>
+                  ¿No tienes cuenta? Crear una
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );
