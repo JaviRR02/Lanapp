@@ -3,31 +3,17 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import MainTabs from "./src/screens/MainTabs";
 import SplashScreen from './src/screens/SplashScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-import DashboardScreen from './src/screens/DashboardScreen';
 import TransactionsScreen from './src/screens/TransactionsScreen';
 import BudgetsScreen from './src/screens/BudgetsScreen';
 import FixedPaymentsScreen from './src/screens/FixedPaymentsScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-
-// Define el navigator de tabs
-function MainTabs() {
-  return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Transactions" component={TransactionsScreen} />
-      <Tab.Screen name="Budgets" component={BudgetsScreen} />
-      <Tab.Screen name="FixedPayments" component={FixedPaymentsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
-  );
-}
 
 export default function App() {
   return (
@@ -47,6 +33,22 @@ export default function App() {
         />
         {/* Registra MainTabs en el stack */}
         <Stack.Screen name="MainTabs" component={MainTabs} />
+        <Stack.Screen
+          name="Transactions"
+          component={TransactionsScreen}
+          options={{ headerShown: true, title: 'Transacciones' }}
+        />
+        <Stack.Screen
+          name="Budgets"
+          component={BudgetsScreen}
+          options={{ headerShown: true, title: 'Presupuestos' }}
+        />
+        <Stack.Screen
+          name="FixedPayments"
+          component={FixedPaymentsScreen}
+          options={{ headerShown: true, title: 'Pagos Fijos' }}
+        />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

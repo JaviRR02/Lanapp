@@ -1,53 +1,48 @@
-// src/navigation/MainTabs.js
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/Ionicons';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Feather } from "@expo/vector-icons"; 
+import { Ionicons } from "@expo/vector-icons"; 
+import { Entypo } from "@expo/vector-icons"; 
 
-import DashboardScreen from '../screens/DashboardScreen';
-import TransactionsScreen from '../screens/TransactionsScreen';
-import BudgetsScreen from '../screens/BudgetsScreen';
-import FixedPaymentsScreen from '../screens/FixedPaymentsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import DashboardScreen from "./DashboardScreen";
+import StatisticsScreen from "./StatisticsScreen";
+import MoreScreen from "./MoreScreen";
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: 'gray',
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
-          switch (route.name) {
-            case 'Dashboard':
-              iconName = 'stats-chart-outline';
-              break;
-            case 'Transacciones':
-              iconName = 'swap-horizontal-outline';
-              break;
-            case 'Presupuestos':
-              iconName = 'wallet-outline';
-              break;
-            case 'Pagos Fijos':
-              iconName = 'card-outline';
-              break;
-            case 'Perfil':
-              iconName = 'person-outline';
-              break;
-            default:
-              iconName = 'ellipse-outline';
-          }
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-      })}
+        tabBarActiveTintColor: "#111418",
+        tabBarInactiveTintColor: "#60758a",
+      }}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Transacciones" component={TransactionsScreen} />
-      <Tab.Screen name="Presupuestos" component={BudgetsScreen} />
-      <Tab.Screen name="Pagos Fijos" component={FixedPaymentsScreen} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{
+          tabBarLabel: "Inicio",
+          tabBarIcon: ({ color }) => <Feather name="list" size={24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Statistics"
+        component={StatisticsScreen}
+        options={{
+          tabBarLabel: "Estadísticas",
+          tabBarIcon: ({ color }) => <Ionicons name="stats-chart" size={24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="More"
+        component={MoreScreen}
+        options={{
+          tabBarLabel: "Más",
+          tabBarIcon: ({ color }) => <Entypo name="dots-three-horizontal" size={20} color={color} />,
+        }}
+      />
     </Tab.Navigator>
   );
 }

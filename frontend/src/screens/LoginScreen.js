@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation }) {
     }
 
     // Alert.alert('¡Éxito!', `Bienvenido ${email}`);
-    navigation.replace('MainTabs');
+    navigation.replace("MainTabs");
   };
 
   return (
