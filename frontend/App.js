@@ -11,6 +11,9 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import TransactionsScreen from './src/screens/TransactionsScreen';
 import BudgetsScreen from './src/screens/BudgetsScreen';
 import FixedPaymentsScreen from './src/screens/FixedPaymentsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
+import NotificationScreen from './src/screens/NotificationScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -47,6 +50,24 @@ export default function App() {
           name="FixedPayments"
           component={FixedPaymentsScreen}
           options={{ headerShown: true, title: 'Pagos Fijos' }}
+        />
+
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ headerShown: true, title: 'Perfil' }}
+        />
+
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
+          options={{ headerShown: true, title: 'Cambiar Contraseña' }}
+        />
+
+        <Stack.Screen
+          name="NotificationScreen"
+          component={NotificationScreen}
+          options={{ headerShown: true, title: 'Notificaciones' }}
         />
 
       </Stack.Navigator>

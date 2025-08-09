@@ -21,11 +21,7 @@ export default function DashboardScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 }}>
-          <Text style={{ fontSize: 18, fontWeight: "bold", color: "#111418" }}>
-            Panel Principal
-          </Text>
-        </View>
+        <Text style={styles.header}>Panel principal</Text>
 
         {/* Card 1 */}
         <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
@@ -108,3 +104,12 @@ export default function DashboardScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = {
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center"
+  }
+};
