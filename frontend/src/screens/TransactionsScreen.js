@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity, Modal, Platform, StyleSheet, Button, SafeAreaView,
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  Button,
+  SafeAreaView,
+  Alert,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 const initialTransactions = [
   {
+    email: "andres@gmail.com",
     amount: 20000,
     category: "Tarjeta",
     date: "10/08/2025",
@@ -13,6 +23,7 @@ const initialTransactions = [
     id: 7,
   },
   {
+    email: "andres@gmail.com",
     amount: 19000,
     category: "Tarjeta",
     date: "10/08/2025",
@@ -21,6 +32,7 @@ const initialTransactions = [
     id: 14,
   },
   {
+    email: "andres@gmail.com",
     amount: 10000,
     category: "pension",
     date: "10/07/2025",
@@ -29,6 +41,7 @@ const initialTransactions = [
     id: 8,
   },
   {
+    email: "andres@gmail.com",
     amount: 500,
     category: "comida",
     date: "10/07/2025",
@@ -37,6 +50,7 @@ const initialTransactions = [
     id: 9,
   },
   {
+    email: "andres@gmail.com",
     amount: 1500,
     category: "Otro",
     date: "10/07/2025",
@@ -45,6 +59,7 @@ const initialTransactions = [
     id: 10,
   },
   {
+    email: "andres@gmail.com",
     amount: 1500,
     category: "Otro",
     date: "10/07/2025",
@@ -53,6 +68,7 @@ const initialTransactions = [
     id: 11,
   },
   {
+    email: "andres@gmail.com",
     amount: 150,
     category: "Comida",
     date: "10/07/2025",
@@ -61,6 +77,7 @@ const initialTransactions = [
     id: 12,
   },
   {
+    email: "andres@gmail.com",
     amount: 450,
     category: "Otro",
     date: "10/07/2025",
@@ -69,6 +86,7 @@ const initialTransactions = [
     id: 13,
   },
   {
+    email: "andres@gmail.com",
     amount: 600,
     category: "transporte",
     date: "10/07/2025",
@@ -81,135 +99,152 @@ const initialTransactions = [
 export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [search, setSearch] = useState("");
-  const [filteredTransactions, setFilteredTransactions] = useState(
-    initialTransactions
-  );
+  const [filteredTransactions, setFilteredTransactions] = useState(initialTransactions);
 
-  // Modal states
   const [modalVisible, setModalVisible] = useState(false);
-  const [newTransaction, setNewTransaction] = useState({
-    amount: "",
-    category: "",
-    date: new Date(),
-    description: "",
-    type: "ingreso",
-  });
-
-  // Date picker visibility
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   useEffect(() => {
     const lowerSearch = search.toLowerCase();
     const filtered = transactions.filter(
       (t) =>
+        t.category.toLowerCase().includes(lowerSearch) ||
         t.description.toLowerCase().includes(lowerSearch) ||
-        t.category.toLowerCase().includes(lowerSearch)
+        t.type.toLowerCase().includes(lowerSearch)
     );
     setFilteredTransactions(filtered);
   }, [search, transactions]);
 
-  const onChangeDate = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === "ios");
-    if (selectedDate) {
-      setNewTransaction((prev) => ({
-        ...prev,
-        date: selectedDate,
-      }));
-    }
-  };
-
-  const addTransaction = () => {
-    if (
-      !newTransaction.amount ||
-      isNaN(Number(newTransaction.amount)) ||
-      Number(newTransaction.amount) <= 0
-    ) {
-      alert("Por favor ingresa un monto válido");
-      return;
-    }
-    if (!newTransaction.category.trim()) {
-      alert("Por favor ingresa una categoría");
-      return;
-    }
-    const newId =
-      transactions.length > 0
-        ? Math.max(...transactions.map((t) => t.id)) + 1
-        : 1;
-
-    const d = newTransaction.date;
-    const formattedDate = `${d.getDate().toString().padStart(2, "0")}/${(
-      d.getMonth() + 1
-    )
-      .toString()
-      .padStart(2, "0")}/${d.getFullYear()}`;
-
-    const transactionToAdd = {
-      id: newId,
-      amount: Number(newTransaction.amount),
-      category: newTransaction.category.trim(),
-      date: formattedDate,
-      description: newTransaction.description.trim(),
-      type: newTransaction.type,
-    };
-
-    setTransactions((prev) => [transactionToAdd, ...prev]);
-    setModalVisible(false);
-    setNewTransaction({
+  const openNewTransactionModal = () => {
+    setEditingTransaction({
       amount: "",
       category: "",
-      date: new Date(),
+      date: "",
       description: "",
       type: "ingreso",
     });
+    setModalVisible(true);
   };
 
-  const renderItem = ({ item }) => {
-    const isIngreso = item.type === "ingreso";
-    return (
-      <View
-        style={[
-          styles.transactionItem,
-          { borderLeftColor: isIngreso ? "green" : "red" },
-        ]}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={styles.transactionDescription}>
-            {item.description || "(Sin descripción)"}
-          </Text>
-          <Text style={styles.transactionCategory}>{item.category}</Text>
-        </View>
-        <View style={{ alignItems: "flex-end" }}>
-          <Text
-            style={[
-              styles.transactionAmount,
-              { color: isIngreso ? "green" : "red" },
-            ]}
-          >
-            {isIngreso ? "+" : "-"}${item.amount.toLocaleString()}
-          </Text>
-          <Text style={styles.transactionDate}>{item.date}</Text>
-        </View>
-      </View>
+  const openEditTransactionModal = (transaction) => {
+    setEditingTransaction({
+      ...transaction,
+      amount: transaction.amount.toString(),
+    });
+    setModalVisible(true);
+  };
+
+  const saveTransaction = () => {
+    const t = editingTransaction;
+
+    if (!t.category.trim()) {
+      alert("Por favor ingresa una categoría");
+      return;
+    }
+    if (!t.date.trim()) {
+      alert("Por favor ingresa una fecha");
+      return;
+    }
+    if (!t.amount || isNaN(Number(t.amount)) || Number(t.amount) <= 0) {
+      alert("Por favor ingresa un monto válido");
+      return;
+    }
+    if (!t.type || (t.type !== "ingreso" && t.type !== "egreso")) {
+      alert("Por favor selecciona un tipo válido");
+      return;
+    }
+
+    if (t.id) {
+      // Editar
+      setTransactions((prev) =>
+        prev.map((tr) =>
+          tr.id === t.id
+            ? {
+                ...tr,
+                category: t.category.trim(),
+                date: t.date.trim(),
+                amount: Number(t.amount),
+                description: t.description.trim(),
+                type: t.type,
+              }
+            : tr
+        )
+      );
+    } else {
+      // Nuevo
+      const newId = transactions.length > 0 ? Math.max(...transactions.map((x) => x.id)) + 1 : 1;
+      setTransactions((prev) => [
+        {
+          id: newId,
+          email: "andres@gmail.com",
+          category: t.category.trim(),
+          date: t.date.trim(),
+          amount: Number(t.amount),
+          description: t.description.trim(),
+          type: t.type,
+        },
+        ...prev,
+      ]);
+    }
+
+    setModalVisible(false);
+    setEditingTransaction(null);
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(
+      "Eliminar transacción",
+      "¿Seguro que quieres eliminar esta transacción?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => {
+            setTransactions((prev) => prev.filter((t) => t.id !== editingTransaction.id));
+            setModalVisible(false);
+            setEditingTransaction(null);
+          },
+        },
+      ]
     );
   };
 
+  const renderItem = ({ item }) => (
+    <TouchableOpacity style={styles.transactionItem} onPress={() => openEditTransactionModal(item)}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.transactionCategory}>{item.category}</Text>
+        <Text style={styles.transactionDescription}>{item.description || "Sin descripción"}</Text>
+        <Text style={styles.transactionDate}>{item.date}</Text>
+      </View>
+      <Text
+        style={[
+          styles.transactionAmount,
+          { color: item.type === "ingreso" ? "#4caf50" : "#f44336" },
+        ]}
+      >
+        {item.type === "egreso" ? "-" : "+"}${Number(item.amount).toLocaleString()}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Search bar */}
+      {/* Barra de búsqueda */}
       <View style={styles.searchContainer}>
         <View style={styles.searchIcon}>
           <Text style={{ fontSize: 18, color: "#60758a" }}>🔍</Text>
         </View>
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar por descripción o categoría"
+          placeholder="Buscar por categoría, descripción o tipo"
           value={search}
           onChangeText={setSearch}
           clearButtonMode="while-editing"
         />
       </View>
 
-      {/* Transactions list */}
+      {/* Lista */}
       <FlatList
         data={filteredTransactions}
         keyExtractor={(item) => item.id.toString()}
@@ -218,109 +253,81 @@ export default function TransactionsScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Floating button */}
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() => setModalVisible(true)}
-      >
+      {/* Botón flotante */}
+      <TouchableOpacity style={styles.floatingButton} onPress={openNewTransactionModal}>
         <Text style={styles.floatingButtonText}>+</Text>
       </TouchableOpacity>
 
-      {/* Modal */}
+      {/* Modal para crear/editar */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nueva Transacción</Text>
-
-            <TextInput
-              keyboardType="numeric"
-              placeholder="Monto"
-              style={styles.input}
-              value={newTransaction.amount.toString()}
-              onChangeText={(text) =>
-                setNewTransaction((prev) => ({ ...prev, amount: text }))
-              }
-            />
+            <Text style={styles.modalTitle}>
+              {editingTransaction?.id ? "Editar Transacción" : "Nueva Transacción"}
+            </Text>
 
             <TextInput
               placeholder="Categoría"
               style={styles.input}
-              value={newTransaction.category}
+              value={editingTransaction?.category || ""}
               onChangeText={(text) =>
-                setNewTransaction((prev) => ({ ...prev, category: text }))
+                setEditingTransaction((prev) => ({ ...prev, category: text }))
               }
             />
-
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text>
-                Fecha:{" "}
-                {newTransaction.date
-                  ? `${newTransaction.date.getDate().toString().padStart(2, "0")}/${
-                      (newTransaction.date.getMonth() + 1).toString().padStart(2, "0")
-                    }/${newTransaction.date.getFullYear()}`
-                  : "Selecciona una fecha"}
-              </Text>
-            </TouchableOpacity>
-
-            {showDatePicker && (
-              <DateTimePicker
-                value={newTransaction.date || new Date()}
-                mode="date"
-                display="default"
-                onChange={onChangeDate}
-                maximumDate={new Date(2100, 12, 31)}
-                minimumDate={new Date(2000, 0, 1)}
-              />
-            )}
-
+            <TextInput
+              placeholder="Fecha (DD/MM/YYYY)"
+              style={styles.input}
+              value={editingTransaction?.date || ""}
+              onChangeText={(text) =>
+                setEditingTransaction((prev) => ({ ...prev, date: text }))
+              }
+            />
+            <TextInput
+              keyboardType="numeric"
+              placeholder="Monto"
+              style={styles.input}
+              value={editingTransaction?.amount?.toString() || ""}
+              onChangeText={(text) =>
+                setEditingTransaction((prev) => ({ ...prev, amount: text }))
+              }
+            />
             <TextInput
               placeholder="Descripción"
               style={styles.input}
-              value={newTransaction.description}
+              value={editingTransaction?.description || ""}
               onChangeText={(text) =>
-                setNewTransaction((prev) => ({ ...prev, description: text }))
+                setEditingTransaction((prev) => ({ ...prev, description: text }))
               }
             />
-
-            <View style={styles.typeContainer}>
+            <View style={styles.typeSelector}>
               <TouchableOpacity
                 style={[
                   styles.typeButton,
-                  newTransaction.type === "ingreso" && styles.typeButtonSelected,
+                  editingTransaction?.type === "ingreso" && styles.typeButtonSelected,
                 ]}
-                onPress={() =>
-                  setNewTransaction((prev) => ({ ...prev, type: "ingreso" }))
-                }
+                onPress={() => setEditingTransaction((prev) => ({ ...prev, type: "ingreso" }))}
               >
                 <Text
-                  style={
-                    newTransaction.type === "ingreso"
-                      ? styles.typeButtonTextSelected
-                      : styles.typeButtonText
-                  }
+                  style={[
+                    styles.typeButtonText,
+                    editingTransaction?.type === "ingreso" && styles.typeButtonTextSelected,
+                  ]}
                 >
                   Ingreso
                 </Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[
                   styles.typeButton,
-                  newTransaction.type === "egreso" && styles.typeButtonSelected,
+                  editingTransaction?.type === "egreso" && styles.typeButtonSelected,
                 ]}
-                onPress={() =>
-                  setNewTransaction((prev) => ({ ...prev, type: "egreso" }))
-                }
+                onPress={() => setEditingTransaction((prev) => ({ ...prev, type: "egreso" }))}
               >
                 <Text
-                  style={
-                    newTransaction.type === "egreso"
-                      ? styles.typeButtonTextSelected
-                      : styles.typeButtonText
-                  }
+                  style={[
+                    styles.typeButtonText,
+                    editingTransaction?.type === "egreso" && styles.typeButtonTextSelected,
+                  ]}
                 >
                   Egreso
                 </Text>
@@ -329,7 +336,10 @@ export default function TransactionsScreen() {
 
             <View style={styles.modalButtons}>
               <Button title="Cancelar" onPress={() => setModalVisible(false)} />
-              <Button title="Agregar" onPress={addTransaction} />
+              {editingTransaction?.id && (
+                <Button title="Eliminar" color="red" onPress={confirmDelete} />
+              )}
+              <Button title="Guardar" onPress={saveTransaction} />
             </View>
           </View>
         </View>
@@ -360,34 +370,59 @@ const styles = StyleSheet.create({
   },
   transactionItem: {
     flexDirection: "row",
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderLeftWidth: 5,
+    borderLeftColor: "#4a90e2",
     backgroundColor: "#fafafa",
     marginHorizontal: 16,
     marginVertical: 4,
     borderRadius: 6,
+    justifyContent: "space-between",
     alignItems: "center",
   },
-  transactionDescription: {
+  transactionCategory: {
     fontSize: 16,
     fontWeight: "600",
     color: "#111",
-  },
-  transactionCategory: {
-    fontSize: 12,
-    color: "#60758a",
-    marginTop: 2,
     textTransform: "capitalize",
   },
-  transactionAmount: {
-    fontSize: 16,
-    fontWeight: "700",
+  transactionDescription: {
+    fontSize: 13,
+    color: "#666",
   },
   transactionDate: {
     fontSize: 12,
     color: "#60758a",
     marginTop: 2,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  typeSelector: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  typeButton: {
+    flex: 1,
+    paddingVertical: 8,
+    marginHorizontal: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#4a90e2",
+    alignItems: "center",
+  },
+  typeButtonSelected: {
+    backgroundColor: "#4a90e2",
+  },
+  typeButtonText: {
+    color: "#4a90e2",
+    fontWeight: "600",
+  },
+  typeButtonTextSelected: {
+    color: "#fff",
   },
   floatingButton: {
     position: "absolute",
@@ -426,6 +461,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     marginBottom: 12,
+    textAlign: "center",
   },
   input: {
     borderWidth: 1,
@@ -435,39 +471,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 12,
     fontSize: 16,
-  },
-  datePickerButton: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 12,
-  },
-  typeContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 12,
-  },
-  typeButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#4a90e2",
-    borderRadius: 8,
-    paddingVertical: 10,
-    marginHorizontal: 5,
-    alignItems: "center",
-  },
-  typeButtonSelected: {
-    backgroundColor: "#4a90e2",
-  },
-  typeButtonText: {
-    color: "#4a90e2",
-    fontWeight: "600",
-  },
-  typeButtonTextSelected: {
-    color: "white",
-    fontWeight: "600",
   },
   modalButtons: {
     flexDirection: "row",
