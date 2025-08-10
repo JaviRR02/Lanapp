@@ -4,25 +4,38 @@ from models import Budget
 from schemas.budget import BudgetSchema
 from database import get_db
 from typing import List
+from auth import get_current_user, User
 
 router = APIRouter(prefix="/api/presupuestos", tags=["Presupuestos"])
 
 @router.get("/", response_model=List[BudgetSchema])
-def ver_presupuestos(email: str, db: Session = Depends(get_db)):
-    return db.query(Budget).filter(Budget.email == email).all()
+def ver_presupuestos(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return db.query(Budget).filter(Budget.email == current_user.email).all()
 
 @router.post("/", response_model=BudgetSchema)
-def crear_presupuesto(data: BudgetSchema, db: Session = Depends(get_db)):
-    nuevo = Budget(**data.dict())
+def crear_presupuesto(
+    data: BudgetSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Aseguramos que el email sea el del usuario autenticado
+    nuevo = Budget(**data.dict(exclude={"email"}), email=current_user.email)
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
     return nuevo
 
 @router.put("/", response_model=BudgetSchema)
-def editar_presupuesto(data: BudgetSchema, db: Session = Depends(get_db)):
+def editar_presupuesto(
+    data: BudgetSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     presupuesto = db.query(Budget).filter(
-        Budget.email == data.email,
+        Budget.email == current_user.email,
         Budget.category == data.category
     ).first()
 
@@ -35,9 +48,13 @@ def editar_presupuesto(data: BudgetSchema, db: Session = Depends(get_db)):
     return presupuesto
 
 @router.get("/buscar", response_model=BudgetSchema)
-def buscar_presupuesto(email: str, category: str, db: Session = Depends(get_db)):
+def buscar_presupuesto(
+    category: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     presupuesto = db.query(Budget).filter(
-        Budget.email == email,
+        Budget.email == current_user.email,
         Budget.category == category
     ).first()
 
@@ -47,9 +64,13 @@ def buscar_presupuesto(email: str, category: str, db: Session = Depends(get_db))
     return presupuesto
 
 @router.delete("/eliminar")
-def eliminar_presupuesto(email: str, category: str, db: Session = Depends(get_db)):
+def eliminar_presupuesto(
+    category: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     presupuesto = db.query(Budget).filter(
-        Budget.email == email,
+        Budget.email == current_user.email,
         Budget.category == category
     ).first()
 

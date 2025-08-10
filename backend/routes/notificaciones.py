@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/api/notificaciones", tags=["notificaciones"])
+router = APIRouter(prefix="/api/notificaciones", tags=["Notificaciones"])
 
 # Simulación de preferencias de notificación
 fake_notifications = {}

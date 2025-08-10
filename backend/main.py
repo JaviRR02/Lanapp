@@ -1,15 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Importar router auth
+from auth import router as auth_router
+
 # Base de datos
 from database import Base, engine
-from models import *  # Modelos SQLAlchemy
+from models import *
 
 # Crear tablas
 Base.metadata.create_all(bind=engine)
 
-# Crear instancia principal de la app
 app = FastAPI()
+
+# Incluir router de autenticación
+app.include_router(auth_router)
 
 # Middleware CORS
 app.add_middleware(
@@ -20,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routers (importaciones después de definir app para evitar referencias circulares)
+# Routers
 from routes import usuarios, transacciones, graficas, presupuestos, notificaciones, pagos, categorias
 
 app.include_router(usuarios.router)
