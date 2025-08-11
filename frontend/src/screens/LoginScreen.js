@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, View, Text, TextInput, StyleSheet, TouchableOpacity, Image, StatusBar, useColorScheme, KeyboardAvoidingView, Platform 
+import React, { useState, useContext, useEffect } from 'react';
+import { 
+  Alert, SafeAreaView, ScrollView, View, Text, TextInput, StyleSheet, TouchableOpacity, Image, StatusBar, useColorScheme, KeyboardAvoidingView, Platform 
 } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
+  console.log('Navigation prop en LoginScreen:', navigation);
   const colorScheme = useColorScheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { signIn, loading, isAuthenticated } = useContext(AuthContext);
 
-  const validateAndLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim()) {
       Alert.alert('Error', 'Por favor ingresa tu correo electrónico');
       return;
@@ -23,9 +27,20 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    // Alert.alert('¡Éxito!', `Bienvenido ${email}`);
-    navigation.replace("MainTabs");
+    try {
+      await signIn(email, password);
+      // Navegación la maneja el contexto / app navigator
+    } catch (error) {
+      const msg = error.response?.data?.detail || "Credenciales inválidas";
+      throw new Error(msg);
+    }
   };
+
+  useEffect(() => {
+    if (isAuthenticated && navigation?.replace) {
+      navigation.replace('MainTabs');
+    }
+  }, [isAuthenticated, navigation]);
 
   return (
     <>
@@ -34,79 +49,52 @@ export default function LoginScreen({ navigation }) {
         backgroundColor="transparent"
         translucent
       />
-      <SafeAreaView 
-        style={[
-          styles.safeArea, 
-          colorScheme === 'dark' ? styles.darkBackground : styles.lightBackground
-        ]}
-      >
+      <SafeAreaView style={[styles.safeArea, colorScheme === 'dark' ? styles.darkBackground : styles.lightBackground]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <ScrollView 
-            contentContainerStyle={styles.container} 
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={[
-              styles.card, 
-              colorScheme === 'dark' ? styles.cardDark : styles.cardLight
-            ]}>
-              {/* Logo */}
+          <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <View style={[styles.card, colorScheme === 'dark' ? styles.cardDark : styles.cardLight]}>
               <Image
                 source={require('../../assets/logoLAPP.png')}
                 style={styles.logo}
                 resizeMode="cover"
               />
-
-              {/* Título */}
-              <Text style={[
-                styles.title, 
-                colorScheme === 'dark' ? styles.titleDark : styles.titleLight
-              ]}>
+              <Text style={[styles.title, colorScheme === 'dark' ? styles.titleDark : styles.titleLight]}>
                 Iniciar Sesión
               </Text>
-
-              {/* Inputs */}
               <TextInput
-                style={[
-                  styles.input, 
-                  colorScheme === 'dark' ? styles.inputDark : styles.inputLight
-                ]}
+                style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
                 placeholder="Correo electrónico"
                 placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
                 onChangeText={setEmail}
+                editable={!loading}
               />
               <TextInput
-                style={[
-                  styles.input, 
-                  colorScheme === 'dark' ? styles.inputDark : styles.inputLight
-                ]}
+                style={[styles.input, colorScheme === 'dark' ? styles.inputDark : styles.inputLight]}
                 placeholder="Contraseña"
                 placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                editable={!loading}
               />
-
-              {/* Botón Iniciar Sesión */}
               <TouchableOpacity
-                style={[styles.button, styles.buttonPrimary]}
-                onPress={validateAndLogin}
+                style={[styles.button, styles.buttonPrimary, loading && { opacity: 0.7 }]}
+                onPress={handleLogin}
+                disabled={loading}
               >
-                <Text style={[styles.buttonText, styles.buttonTextLight]}>Entrar</Text>
+                <Text style={[styles.buttonText, styles.buttonTextLight]}>
+                  {loading ? 'Ingresando...' : 'Entrar'}
+                </Text>
               </TouchableOpacity>
-
-              {/* Navegar a Registrar */}
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={[
-                  styles.linkText, 
-                  colorScheme === 'dark' ? styles.titleDark : styles.titleLight
-                ]}>
+                <Text style={[styles.linkText, colorScheme === 'dark' ? styles.titleDark : styles.titleLight]}>
                   ¿No tienes cuenta? Crear una
                 </Text>
               </TouchableOpacity>

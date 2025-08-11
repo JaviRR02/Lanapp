@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas.user import UserCreate, UserLogin, UserProfileUpdate
+from schemas.user import UserCreate, UserLogin, UserProfileUpdate, PasswordChangeRequest
 from crud import usuarios as crud
 from models import User
 from auth import get_current_user
+from models import User
+from auth import get_current_user, verify_password, get_password_hash
+
 
 router = APIRouter(prefix="/api/usuarios", tags=["Usuarios"])
 
@@ -18,14 +21,22 @@ def recuperar_contraseña(email: str, db: Session = Depends(get_db)):
 
 @router.put("/cambiarpassword")
 def cambiar_password(
-    data: UserLogin,
+    data: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    # El usuario autenticado cambia su propia contraseña
-    if crud.update_password(db, current_user.email, data.password):
-        return {"message": "Contraseña actualizada correctamente"}
-    raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    # Validar contraseña actual
+    if not verify_password(data.password_actual, current_user.password):
+        raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
+
+    # Buscar usuario y actualizar
+    user = db.query(User).filter(User.email == current_user.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    user.password = get_password_hash(data.password_nuevo)
+    db.commit()
+    return {"message": "Contraseña actualizada correctamente"}
 
 @router.get("/perfil")
 def ver_perfil(current_user: User = Depends(get_current_user)):

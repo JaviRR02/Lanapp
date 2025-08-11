@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -11,21 +11,41 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
-
-const initialBudgets = [
-  { category: "comida", limit: 4500, email: "andres@gmail.com" },
-  { category: "otro", limit: 5000, email: "andres@gmail.com" },
-  { category: "transporte", limit: 2000, email: "andres@gmail.com" },
-];
+import { AuthContext } from "../context/AuthContext";
 
 export default function BudgetsScreen() {
-  const [budgets, setBudgets] = useState(initialBudgets);
+  const { token, user } = useContext(AuthContext);
+  const email = user?.email || "";
+
+  const [budgets, setBudgets] = useState([]);
+  const [filteredBudgets, setFilteredBudgets] = useState([]);
   const [search, setSearch] = useState("");
-  const [filteredBudgets, setFilteredBudgets] = useState(initialBudgets);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
 
+  // Cargar presupuestos al montar y cuando token/email cambian
+  useEffect(() => {
+    if (!token || !email) return;
+
+    const fetchBudgets = async () => {
+      try {
+        const res = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Error cargando presupuestos");
+        const data = await res.json();
+        setBudgets(data);
+        setFilteredBudgets(data);
+      } catch (error) {
+        Alert.alert("Error", error.message);
+        console.error("Fetch budgets error:", error);
+      }
+    };
+    fetchBudgets();
+  }, [token, email]);
+
+  // Filtrar presupuestos cuando cambian search o budgets
   useEffect(() => {
     const lowerSearch = search.toLowerCase();
     const filtered = budgets.filter((b) =>
@@ -47,9 +67,9 @@ export default function BudgetsScreen() {
     setModalVisible(true);
   };
 
-  const saveBudget = () => {
+  const saveBudget = async () => {
     if (!editingBudget.category.trim()) {
-      alert("Por favor ingresa una categoría");
+      Alert.alert("Error", "Por favor ingresa una categoría");
       return;
     }
     if (
@@ -57,32 +77,91 @@ export default function BudgetsScreen() {
       isNaN(Number(editingBudget.limit)) ||
       Number(editingBudget.limit) <= 0
     ) {
-      alert("Por favor ingresa un límite válido");
+      Alert.alert("Error", "Por favor ingresa un límite válido");
       return;
     }
 
-    if (editingBudget.email) {
-      // Editar existente
-      setBudgets((prev) =>
-        prev.map((b) =>
-          b.category === editingBudget.category
-            ? {
-                ...b,
-                limit: Number(editingBudget.limit),
-              }
-            : b
-        )
-      );
-    } else {
-      // Nuevo presupuesto
-      setBudgets((prev) => [
-        { category: editingBudget.category.trim(), limit: Number(editingBudget.limit), email: "andres@gmail.com" },
-        ...prev,
-      ]);
-    }
+    try {
+      let res;
+      const bodyData = {
+        category: editingBudget.category.trim(),
+        limit: Number(editingBudget.limit),
+        email, // backend ignora y usa current_user.email, pero se envía para claridad
+      };
 
-    setModalVisible(false);
-    setEditingBudget(null);
+      if (editingBudget.email) {
+        // Editar
+        res = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyData),
+        });
+      } else {
+        // Crear
+        res = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyData),
+        });
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Error guardando presupuesto");
+      }
+
+      // Recarga todos los presupuestos actualizados
+      const allRes = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const allData = await allRes.json();
+      setBudgets(allData);
+      setFilteredBudgets(allData);
+
+      setModalVisible(false);
+      setEditingBudget(null);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+      console.error("Save budget error:", error);
+    }
+  };
+
+  const deleteBudget = async () => {
+    try {
+      const res = await fetch(
+        `http://192.168.0.5:8000/api/presupuestos/eliminar?category=${encodeURIComponent(
+          editingBudget.category
+        )}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Error eliminando presupuesto");
+      }
+
+      // Actualiza lista tras eliminar
+      const allRes = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const allData = await allRes.json();
+      setBudgets(allData);
+      setFilteredBudgets(allData);
+
+      setModalVisible(false);
+      setEditingBudget(null);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+      console.error("Delete budget error:", error);
+    }
   };
 
   const confirmDelete = () => {
@@ -91,23 +170,16 @@ export default function BudgetsScreen() {
       "¿Seguro que quieres eliminar este presupuesto?",
       [
         { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () => {
-            setBudgets((prev) =>
-              prev.filter((b) => b.category !== editingBudget.category)
-            );
-            setModalVisible(false);
-            setEditingBudget(null);
-          },
-        },
+        { text: "Eliminar", style: "destructive", onPress: deleteBudget },
       ]
     );
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.budgetItem} onPress={() => openEditBudgetModal(item)}>
+    <TouchableOpacity
+      style={styles.budgetItem}
+      onPress={() => openEditBudgetModal(item)}
+    >
       <Text style={styles.budgetCategory}>{item.category}</Text>
       <Text style={styles.budgetLimit}>${item.limit.toLocaleString()}</Text>
     </TouchableOpacity>
@@ -139,7 +211,10 @@ export default function BudgetsScreen() {
       />
 
       {/* Botón flotante */}
-      <TouchableOpacity style={styles.floatingButton} onPress={openNewBudgetModal}>
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={openNewBudgetModal}
+      >
         <Text style={styles.floatingButtonText}>+</Text>
       </TouchableOpacity>
 
@@ -158,7 +233,7 @@ export default function BudgetsScreen() {
               onChangeText={(text) =>
                 setEditingBudget((prev) => ({ ...prev, category: text }))
               }
-              editable={!editingBudget?.email} // No dejar editar categoría al modificar para evitar key duplicada
+              editable={!editingBudget?.email} // No permite editar categoría al modificar
             />
             <TextInput
               keyboardType="numeric"

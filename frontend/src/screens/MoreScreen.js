@@ -1,17 +1,18 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Alert, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { AuthContext } from "../context/AuthContext";
 
 export default function MoreScreen() {
   const navigation = useNavigation();
+  const { signOut, loading } = useContext(AuthContext);
   const screenWidth = Dimensions.get("window").width;
-  const buttonWidth = (screenWidth * 4) / 7; // 4/7 de la pantalla
+  const buttonWidth = (screenWidth * 4) / 7;
 
   const cardStyle = {
     backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 0,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -22,64 +23,47 @@ export default function MoreScreen() {
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que deseas cerrar sesión?", [
       { text: "Cancelar", style: "cancel" },
-      { text: "Cerrar sesión", style: "destructive", onPress: () => console.log("Sesión cerrada") },
+      { text: "Cerrar sesión", style: "destructive", onPress: () => signOut() },
     ]);
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Cerrando sesión...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={{ flex: 1 }}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 }}>
-          {/* HEADER */}
           <Text style={styles.header}>Más opciones</Text>
 
           {/* Card Perfil */}
-          <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-            <TouchableOpacity onPress={() => navigation.navigate("Profile")} activeOpacity={0.8}>
-              <View style={cardStyle}>
-                <View style={{ padding: 16 }}>
-                  <Text style={{ fontSize: 18, fontWeight: "bold", color: "#111418" }}>
-                    Ver / Editar perfil
-                  </Text>
-                  <Text style={{ fontSize: 16, color: "#60758a" }}>
-                    Accede a tu información personal y edítala
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <CardOption
+            title="Ver / Editar perfil"
+            subtitle="Accede a tu información personal y edítala"
+            onPress={() => navigation.navigate("Profile")}
+            cardStyle={cardStyle}
+          />
 
           {/* Card Cambiar contraseña */}
-          <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-            <TouchableOpacity onPress={() => navigation.navigate("ChangePassword")} activeOpacity={0.8}>
-              <View style={cardStyle}>
-                <View style={{ padding: 16 }}>
-                  <Text style={{ fontSize: 18, fontWeight: "bold", color: "#111418" }}>
-                    Cambiar contraseña
-                  </Text>
-                  <Text style={{ fontSize: 16, color: "#60758a" }}>
-                    Actualiza tu contraseña para mayor seguridad
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <CardOption
+            title="Cambiar contraseña"
+            subtitle="Actualiza tu contraseña para mayor seguridad"
+            onPress={() => navigation.navigate("ChangePassword")}
+            cardStyle={cardStyle}
+          />
 
           {/* Card Notificaciones */}
-          <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-            <TouchableOpacity onPress={() => navigation.navigate("NotificationScreen")} activeOpacity={0.8}>
-              <View style={cardStyle}>
-                <View style={{ padding: 16 }}>
-                  <Text style={{ fontSize: 18, fontWeight: "bold", color: "#111418" }}>
-                    Configurar notificaciones
-                  </Text>
-                  <Text style={{ fontSize: 16, color: "#60758a" }}>
-                    Ajusta tus alertas por SMS o email
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <CardOption
+            title="Configurar notificaciones"
+            subtitle="Ajusta tus alertas por SMS o email"
+            onPress={() => navigation.navigate("NotificationScreen")}
+            cardStyle={cardStyle}
+          />
         </ScrollView>
 
         {/* Botón Cerrar sesión */}
@@ -106,6 +90,19 @@ export default function MoreScreen() {
     </SafeAreaView>
   );
 }
+
+const CardOption = ({ title, subtitle, onPress, cardStyle }) => (
+  <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <View style={cardStyle}>
+        <View style={{ padding: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: "bold", color: "#111418" }}>{title}</Text>
+          <Text style={{ fontSize: 16, color: "#60758a" }}>{subtitle}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  </View>
+);
 
 const styles = {
   header: {

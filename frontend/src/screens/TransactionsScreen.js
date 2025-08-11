@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -11,98 +11,24 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
-
-const initialTransactions = [
-  {
-    email: "andres@gmail.com",
-    amount: 20000,
-    category: "Tarjeta",
-    date: "10/08/2025",
-    description: "Sueldo",
-    type: "ingreso",
-    id: 7,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 19000,
-    category: "Tarjeta",
-    date: "10/08/2025",
-    description: "Una mega propina",
-    type: "ingreso",
-    id: 14,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 10000,
-    category: "pension",
-    date: "10/07/2025",
-    description: "pago de pension",
-    type: "egreso",
-    id: 8,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 500,
-    category: "comida",
-    date: "10/07/2025",
-    description: "una rica pipza",
-    type: "egreso",
-    id: 9,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 1500,
-    category: "Otro",
-    date: "10/07/2025",
-    description: "Mil quinientos",
-    type: "egreso",
-    id: 10,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 1500,
-    category: "Otro",
-    date: "10/07/2025",
-    description: " Otra milky",
-    type: "egreso",
-    id: 11,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 150,
-    category: "Comida",
-    date: "10/07/2025",
-    description: " Papas y refresco",
-    type: "egreso",
-    id: 12,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 450,
-    category: "Otro",
-    date: "10/07/2025",
-    description: "Cine",
-    type: "egreso",
-    id: 13,
-  },
-  {
-    email: "andres@gmail.com",
-    amount: 600,
-    category: "transporte",
-    date: "10/07/2025",
-    description: "",
-    type: "egreso",
-    id: 15,
-  },
-];
+import { AuthContext } from "../context/AuthContext";
 
 export default function TransactionsScreen() {
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const { token, user } = useContext(AuthContext);
+  const email = user?.email;
+  const [transactions, setTransactions] = useState([]);
   const [search, setSearch] = useState("");
-  const [filteredTransactions, setFilteredTransactions] = useState(initialTransactions);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+
+  const apiUrl = "http://192.168.0.5:8000/api/transacciones";
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   useEffect(() => {
     const lowerSearch = search.toLowerCase();
@@ -114,6 +40,21 @@ export default function TransactionsScreen() {
     );
     setFilteredTransactions(filtered);
   }, [search, transactions]);
+
+  const fetchTransactions = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/historial`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Error cargando transacciones");
+      const data = await res.json();
+      setTransactions(data);
+      setFilteredTransactions(data);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+      console.error("Fetch transactions error:", error);
+    }
+  };
 
   const openNewTransactionModal = () => {
     setEditingTransaction({
@@ -134,61 +75,82 @@ export default function TransactionsScreen() {
     setModalVisible(true);
   };
 
-  const saveTransaction = () => {
+  const saveTransaction = async () => {
     const t = editingTransaction;
 
     if (!t.category.trim()) {
-      alert("Por favor ingresa una categoría");
+      Alert.alert("Error", "Por favor ingresa una categoría");
       return;
     }
     if (!t.date.trim()) {
-      alert("Por favor ingresa una fecha");
+      Alert.alert("Error", "Por favor ingresa una fecha");
       return;
     }
     if (!t.amount || isNaN(Number(t.amount)) || Number(t.amount) <= 0) {
-      alert("Por favor ingresa un monto válido");
+      Alert.alert("Error", "Por favor ingresa un monto válido");
       return;
     }
     if (!t.type || (t.type !== "ingreso" && t.type !== "egreso")) {
-      alert("Por favor selecciona un tipo válido");
+      Alert.alert("Error", "Por favor selecciona un tipo válido");
+      return;
+    }
+    if (!email) {
+      Alert.alert("Error", "No se encontró el correo del usuario. Por favor inicia sesión de nuevo.");
       return;
     }
 
-    if (t.id) {
-      // Editar
-      setTransactions((prev) =>
-        prev.map((tr) =>
-          tr.id === t.id
-            ? {
-                ...tr,
-                category: t.category.trim(),
-                date: t.date.trim(),
-                amount: Number(t.amount),
-                description: t.description.trim(),
-                type: t.type,
-              }
-            : tr
-        )
-      );
-    } else {
-      // Nuevo
-      const newId = transactions.length > 0 ? Math.max(...transactions.map((x) => x.id)) + 1 : 1;
-      setTransactions((prev) => [
-        {
-          id: newId,
-          email: "andres@gmail.com",
-          category: t.category.trim(),
-          date: t.date.trim(),
-          amount: Number(t.amount),
-          description: t.description.trim(),
-          type: t.type,
-        },
-        ...prev,
-      ]);
-    }
+    const bodyData = {
+      email: email,
+      category: t.category.trim(),
+      date: t.date.trim(),
+      amount: Number(t.amount),
+      description: t.description.trim(),
+      type: t.type,
+    };
 
-    setModalVisible(false);
-    setEditingTransaction(null);
+    try {
+      let res;
+      if (t.id) {
+        // Actualizar transacción
+        res = await fetch(`${apiUrl}/${t.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyData),
+        });
+      } else {
+        // Crear transacción
+        res = await fetch(`${apiUrl}/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyData),
+        });
+      }
+
+      if (!res.ok) {
+        let errorMessage = `Error ${t.id ? "actualizando" : "creando"} transacción`;
+        try {
+          const errorData = await res.json();
+          errorMessage += ": " + (errorData.message || JSON.stringify(errorData));
+        } catch {
+          const errorText = await res.text();
+          errorMessage += ": " + errorText;
+        }
+        throw new Error(errorMessage);
+      }
+
+      await fetchTransactions();
+      setModalVisible(false);
+      setEditingTransaction(null);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+      console.error("Save transaction error:", error);
+    }
   };
 
   const confirmDelete = () => {
@@ -200,21 +162,41 @@ export default function TransactionsScreen() {
         {
           text: "Eliminar",
           style: "destructive",
-          onPress: () => {
-            setTransactions((prev) => prev.filter((t) => t.id !== editingTransaction.id));
-            setModalVisible(false);
-            setEditingTransaction(null);
-          },
+          onPress: deleteTransaction,
         },
       ]
     );
   };
 
+  const deleteTransaction = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/eliminar/${editingTransaction.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Error eliminando transacción");
+
+      await fetchTransactions();
+      setModalVisible(false);
+      setEditingTransaction(null);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+      console.error("Delete transaction error:", error);
+    }
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.transactionItem} onPress={() => openEditTransactionModal(item)}>
+    <TouchableOpacity
+      style={styles.transactionItem}
+      onPress={() => openEditTransactionModal(item)}
+    >
       <View style={{ flex: 1 }}>
         <Text style={styles.transactionCategory}>{item.category}</Text>
-        <Text style={styles.transactionDescription}>{item.description || "Sin descripción"}</Text>
+        <Text style={styles.transactionDescription}>
+          {item.description || "Sin descripción"}
+        </Text>
         <Text style={styles.transactionDate}>{item.date}</Text>
       </View>
       <Text

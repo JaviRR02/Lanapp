@@ -1,11 +1,19 @@
 import React, { useState } from "react";
-import { SafeAreaView, View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Alert,
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 
-export default function ChangePasswordScreen() {
-  const email = "andres@gmail.com";
-  const savedPassword = "1234567890";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export default function ChangePasswordScreen() {
+  const email = "andres@gmail.com"; // opcional mostrar o no
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -26,9 +34,9 @@ export default function ChangePasswordScreen() {
     );
   };
 
-  const handleChangePassword = () => {
-    if (currentPassword !== savedPassword) {
-      Alert.alert("Error", "La contraseña actual no coincide.");
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      Alert.alert("Error", "La nueva contraseña y la confirmación no coinciden.");
       return;
     }
 
@@ -40,20 +48,50 @@ export default function ChangePasswordScreen() {
       return;
     }
 
-    if (newPassword !== confirmNewPassword) {
-      Alert.alert("Error", "La nueva contraseña y la confirmación no coinciden.");
-      return;
-    }
+    try {
+      const token = await AsyncStorage.getItem("token"); // Obtén tu token guardado
 
-    Alert.alert("Éxito", "La contraseña ha sido actualizada correctamente.");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmNewPassword("");
+      if (!token) {
+        Alert.alert("Error", "No estás autenticado.");
+        return;
+      }
+
+      const response = await fetch(
+        "http://192.168.0.5:8000/api/usuarios/cambiarpassword",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            password_actual: currentPassword,
+            password_nuevo: newPassword,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        Alert.alert("Error", errorData.detail || "Error cambiando la contraseña");
+        return;
+      }
+
+      Alert.alert("Éxito", "La contraseña ha sido actualizada correctamente.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (error) {
+      Alert.alert("Error", "No se pudo conectar con el servidor");
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -100,7 +138,11 @@ export default function ChangePasswordScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleChangePassword} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleChangePassword}
+          activeOpacity={0.8}
+        >
           <Text style={styles.buttonText}>Confirmar cambio</Text>
         </TouchableOpacity>
       </ScrollView>

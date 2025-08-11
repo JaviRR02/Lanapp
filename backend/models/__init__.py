@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float
 from database import Base
+from pydantic import BaseModel, Field
 
 class User(Base):
     __tablename__ = "users"

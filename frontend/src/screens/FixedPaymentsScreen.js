@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -11,21 +11,41 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
-
-const initialFixedPayments = [
-  { id: 1, email: "javier@gmail.com", name: "prestamo", amount: 1000, day: 10 },
-  { id: 2, email: "javier@gmail.com", name: "Comida", amount: 300, day: 1 },
-  { id: 3, email: "carol@gmail.com", name: "Transporte", amount: 1000, day: 7 },
-];
+import { AuthContext } from "../context/AuthContext";
 
 export default function FixedPaymentsScreen() {
-  const [fixedPayments, setFixedPayments] = useState(initialFixedPayments);
+  const { token, user } = useContext(AuthContext);
+  const email = user?.email || "";
+
+  const [fixedPayments, setFixedPayments] = useState([]);
+  const [filteredPayments, setFilteredPayments] = useState([]);
   const [search, setSearch] = useState("");
-  const [filteredPayments, setFilteredPayments] = useState(initialFixedPayments);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
 
+  // Cargar pagos fijos al iniciar y cuando token/email cambian
+  useEffect(() => {
+    if (!token || !email) return;
+
+    const fetchPayments = async () => {
+      try {
+        const res = await fetch("http://192.168.0.5:8000/api/pagos/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Error cargando pagos fijos");
+        const data = await res.json();
+        setFixedPayments(data);
+        setFilteredPayments(data);
+      } catch (error) {
+        Alert.alert("Error", error.message);
+        console.error("Fetch fixed payments error:", error);
+      }
+    };
+    fetchPayments();
+  }, [token, email]);
+
+  // Filtrar pagos según búsqueda
   useEffect(() => {
     const lowerSearch = search.toLowerCase();
     const filtered = fixedPayments.filter((p) =>
@@ -35,7 +55,7 @@ export default function FixedPaymentsScreen() {
   }, [search, fixedPayments]);
 
   const openNewPaymentModal = () => {
-    setEditingPayment({ name: "", amount: "", day: "" }); // campos vacíos para crear
+    setEditingPayment({ name: "", amount: "", day: "" });
     setModalVisible(true);
   };
 
@@ -44,14 +64,13 @@ export default function FixedPaymentsScreen() {
       ...payment,
       amount: payment.amount.toString(),
       day: payment.day.toString(),
-    }); // convertir a string para inputs
+    });
     setModalVisible(true);
   };
 
-  const savePayment = () => {
-    // Validaciones
+  const savePayment = async () => {
     if (!editingPayment.name.trim()) {
-      alert("Por favor ingresa un nombre");
+      Alert.alert("Error", "Por favor ingresa un nombre");
       return;
     }
     if (
@@ -59,7 +78,7 @@ export default function FixedPaymentsScreen() {
       isNaN(Number(editingPayment.amount)) ||
       Number(editingPayment.amount) <= 0
     ) {
-      alert("Por favor ingresa un monto válido");
+      Alert.alert("Error", "Por favor ingresa un monto válido");
       return;
     }
     if (
@@ -68,44 +87,93 @@ export default function FixedPaymentsScreen() {
       Number(editingPayment.day) < 1 ||
       Number(editingPayment.day) > 31
     ) {
-      alert("Por favor ingresa un día válido (1-31)");
+      Alert.alert("Error", "Por favor ingresa un día válido (1-31)");
       return;
     }
 
-    if (editingPayment.id) {
-      // Editando existente
-      setFixedPayments((prev) =>
-        prev.map((p) =>
-          p.id === editingPayment.id
-            ? {
-                ...p,
-                name: editingPayment.name.trim(),
-                amount: Number(editingPayment.amount),
-                day: Number(editingPayment.day),
-              }
-            : p
-        )
-      );
-    } else {
-      // Nuevo pago fijo
-      const newId =
-        fixedPayments.length > 0
-          ? Math.max(...fixedPayments.map((p) => p.id)) + 1
-          : 1;
-      setFixedPayments((prev) => [
-        {
-          id: newId,
-          email: "default@example.com",
-          name: editingPayment.name.trim(),
-          amount: Number(editingPayment.amount),
-          day: Number(editingPayment.day),
-        },
-        ...prev,
-      ]);
-    }
+    try {
+      let res;
+      const bodyData = {
+        name: editingPayment.name.trim(),
+        amount: Number(editingPayment.amount),
+        day: Number(editingPayment.day),
+        email, // el backend ignora y usa current_user.email
+      };
 
-    setModalVisible(false);
-    setEditingPayment(null);
+      if (editingPayment.id) {
+        // Editar pago existente
+        res = await fetch(
+          `http://192.168.0.5:8000/api/pagos/editar/${editingPayment.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(bodyData),
+          }
+        );
+      } else {
+        // Crear nuevo pago
+        res = await fetch("http://192.168.0.5:8000/api/pagos/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyData),
+        });
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Error guardando pago fijo");
+      }
+
+      // Recarga lista tras guardar
+      const allRes = await fetch("http://192.168.0.5:8000/api/pagos/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const allData = await allRes.json();
+      setFixedPayments(allData);
+      setFilteredPayments(allData);
+
+      setModalVisible(false);
+      setEditingPayment(null);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+      console.error("Save payment error:", error);
+    }
+  };
+
+  const deletePayment = async () => {
+    try {
+      const res = await fetch(
+        `http://192.168.0.5:8000/api/pagos/eliminar/${editingPayment.id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Error eliminando pago fijo");
+      }
+
+      // Actualiza lista tras eliminar
+      const allRes = await fetch("http://192.168.0.5:8000/api/pagos/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const allData = await allRes.json();
+      setFixedPayments(allData);
+      setFilteredPayments(allData);
+
+      setModalVisible(false);
+      setEditingPayment(null);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+      console.error("Delete payment error:", error);
+    }
   };
 
   const confirmDelete = () => {
@@ -114,17 +182,7 @@ export default function FixedPaymentsScreen() {
       "¿Seguro que quieres eliminar este pago fijo?",
       [
         { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () => {
-            setFixedPayments((prev) =>
-              prev.filter((p) => p.id !== editingPayment.id)
-            );
-            setModalVisible(false);
-            setEditingPayment(null);
-          },
-        },
+        { text: "Eliminar", style: "destructive", onPress: deletePayment },
       ]
     );
   };
@@ -168,7 +226,10 @@ export default function FixedPaymentsScreen() {
       />
 
       {/* Botón flotante para nuevo pago fijo */}
-      <TouchableOpacity style={styles.floatingButton} onPress={openNewPaymentModal}>
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={openNewPaymentModal}
+      >
         <Text style={styles.floatingButtonText}>+</Text>
       </TouchableOpacity>
 
