@@ -24,7 +24,7 @@ export default function TransactionsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
 
-  const apiUrl = "http://192.168.0.5:8000/api/transacciones";
+  const apiUrl = "http://192.168.0.7:8000/api/transacciones";
 
   useEffect(() => {
     fetchTransactions();

@@ -30,7 +30,7 @@ export default function FixedPaymentsScreen() {
 
     const fetchPayments = async () => {
       try {
-        const res = await fetch("http://192.168.0.5:8000/api/pagos/", {
+        const res = await fetch("http://192.168.0.7:8000/api/pagos/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Error cargando pagos fijos");
@@ -103,7 +103,7 @@ export default function FixedPaymentsScreen() {
       if (editingPayment.id) {
         // Editar pago existente
         res = await fetch(
-          `http://192.168.0.5:8000/api/pagos/editar/${editingPayment.id}`,
+          `http://192.168.0.7:8000/api/pagos/editar/${editingPayment.id}`,
           {
             method: "PUT",
             headers: {
@@ -115,7 +115,7 @@ export default function FixedPaymentsScreen() {
         );
       } else {
         // Crear nuevo pago
-        res = await fetch("http://192.168.0.5:8000/api/pagos/", {
+        res = await fetch("http://192.168.0.7:8000/api/pagos/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -131,7 +131,7 @@ export default function FixedPaymentsScreen() {
       }
 
       // Recarga lista tras guardar
-      const allRes = await fetch("http://192.168.0.5:8000/api/pagos/", {
+      const allRes = await fetch("http://192.168.0.7:8000/api/pagos/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allData = await allRes.json();
@@ -149,7 +149,7 @@ export default function FixedPaymentsScreen() {
   const deletePayment = async () => {
     try {
       const res = await fetch(
-        `http://192.168.0.5:8000/api/pagos/eliminar/${editingPayment.id}`,
+        `http://192.168.0.7:8000/api/pagos/eliminar/${editingPayment.id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -161,7 +161,7 @@ export default function FixedPaymentsScreen() {
       }
 
       // Actualiza lista tras eliminar
-      const allRes = await fetch("http://192.168.0.5:8000/api/pagos/", {
+      const allRes = await fetch("http://192.168.0.7:8000/api/pagos/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allData = await allRes.json();

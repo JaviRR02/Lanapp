@@ -36,7 +36,9 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "network": {
+        "allowInsecureRequests": true
+      }
     },
     "extra": {
       "router": {},

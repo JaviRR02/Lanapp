@@ -11,10 +11,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts",
     "src/screens/LoginScreen.js",
     "src/screens/HomeScreenTabs.js",
     "src/screens/RegisterScreen.js"
-   ]
+  ]
 }

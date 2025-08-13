@@ -27,7 +27,7 @@ export default function ProfileScreen() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://192.168.0.5:8000/api/usuarios/perfil", {
+        const res = await fetch("http://192.168.0.7:8000/api/usuarios/perfil", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Error cargando perfil");
@@ -46,7 +46,7 @@ export default function ProfileScreen() {
 
   const guardarPerfil = async () => {
     try {
-      const res = await fetch("http://192.168.0.5:8000/api/usuarios/perfil", {
+      const res = await fetch("http://192.168.0.7:8000/api/usuarios/perfil", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

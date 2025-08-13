@@ -30,7 +30,7 @@ export default function BudgetsScreen() {
 
     const fetchBudgets = async () => {
       try {
-        const res = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+        const res = await fetch("http://192.168.0.7:8000/api/presupuestos/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Error cargando presupuestos");
@@ -91,7 +91,7 @@ export default function BudgetsScreen() {
 
       if (editingBudget.email) {
         // Editar
-        res = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+        res = await fetch("http://192.168.0.7:8000/api/presupuestos/", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -101,7 +101,7 @@ export default function BudgetsScreen() {
         });
       } else {
         // Crear
-        res = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+        res = await fetch("http://192.168.0.7:8000/api/presupuestos/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -117,7 +117,7 @@ export default function BudgetsScreen() {
       }
 
       // Recarga todos los presupuestos actualizados
-      const allRes = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+      const allRes = await fetch("http://192.168.0.7:8000/api/presupuestos/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allData = await allRes.json();
@@ -135,7 +135,7 @@ export default function BudgetsScreen() {
   const deleteBudget = async () => {
     try {
       const res = await fetch(
-        `http://192.168.0.5:8000/api/presupuestos/eliminar?category=${encodeURIComponent(
+        `http://192.168.0.7:8000/api/presupuestos/eliminar?category=${encodeURIComponent(
           editingBudget.category
         )}`,
         {
@@ -149,7 +149,7 @@ export default function BudgetsScreen() {
       }
 
       // Actualiza lista tras eliminar
-      const allRes = await fetch("http://192.168.0.5:8000/api/presupuestos/", {
+      const allRes = await fetch("http://192.168.0.7:8000/api/presupuestos/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allData = await allRes.json();

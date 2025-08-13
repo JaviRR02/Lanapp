@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   const signIn = async (email, password) => {
     setLoading(true);
     try {
-        const response = await fetch("http://192.168.0.5:8000/auth/login", {
+        const response = await fetch("http://192.168.0.7:8000/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -70,17 +70,28 @@ export const AuthProvider = ({ children }) => {
     };
 
   const register = async (userData) => {
-    setLoading(true);
-    try {
-        await axios.post("http://192.168.0.5:8000/auth/register", userData);
-        return true;
-    } catch (error) {
-        console.error("Error registrando usuario", error);
-        throw new Error(error.response?.data?.detail || "Error al registrar usuario");
-    } finally {
-        setLoading(false);
+  setLoading(true);
+  try {
+    const response = await axios.post("http://192.168.0.7:8000/auth/register", userData, {
+      timeout: 10000, // 10 segundos
+    });
+    console.log("Registro exitoso:", response.data);
+    return true;
+  } catch (error) {
+    console.error("Error completo:", JSON.stringify(error, null, 2));
+    let errorMsg = "Error al registrar usuario";
+    if (error.code === 'ECONNABORTED') {
+      errorMsg = "Tiempo de espera excedido. Verifica tu conexión o el servidor.";
+    } else if (error.message.includes('Network Error')) {
+      errorMsg = "Error de red. Asegúrate de estar en la misma red que el servidor.";
+    } else if (error.response && error.response.data) {
+      errorMsg = error.response.data.detail || "Error en el servidor.";
     }
-  };
+    throw new Error(errorMsg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Función para logout
   const signOut = async () => {
